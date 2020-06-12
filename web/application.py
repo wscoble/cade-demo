@@ -4,18 +4,12 @@ import json, os
 import boto3
 def envvar(key):
     return os.environ.get(key)
-# Default config vals
-THEME = 'default' if envvar('THEME') is None else envvar('THEME')
-FLASK_DEBUG = 'false' if envvar('FLASK_DEBUG') is None else envvar('FLASK_DEBUG')
 
 # Create the Flask app
 app = Flask(__name__)
 
 # Load config values specified above
 app.config.from_object(__name__)
-
-# Only enable Flask debugging if an env var is set to true
-app.debug = envvar('FLASK_DEBUG') in ['true', 'True']
 
 # Connect to DynamoDB and get ref to Table
 dynamodb = boto3.resource('dynamodb')

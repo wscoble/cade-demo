@@ -1,12 +1,8 @@
-import os
-import sys
-
 from flask import Flask, request, Response, render_template, redirect
+from utils import envvar
+import json
 
 import boto3
-
-def envvar(key):
-    return os.environ.get(key)
 
 # Default config vals
 THEME = 'default' if envvar('THEME') is None else envvar('THEME')
@@ -57,18 +53,17 @@ def upload():
     f.save(f"uploads/{f.filename}")
     s3_client = boto3.client('s3')
     table = dynamodb.Table(envvar('IMAGE_INDEX_TABLE'))
-    with open(f"uploads/{f.filename}", "rb") as _f:
-        s3_client.upload_file(
-            f"uploads/{f.filename}",
-            envvar('IMAGE_BUCKET'),
-            f.filename,
-            ExtraArgs={'ACL': 'public-read'})
-        table.put_item(
-            Item={
-                'filename': f.filename,
-                'original': True
-            }
-        )
+    s3_client.upload_file(
+        f"uploads/{f.filename}",
+        envvar('IMAGE_BUCKET'),
+        f.filename,
+        ExtraArgs={'ACL': 'public-read'})
+    table.put_item(
+        Item={
+            'filename': f.filename,
+            'original': True
+        }
+    )
     return redirect('/')
 
 @app.route('/beautify/<filename>')
@@ -76,6 +71,6 @@ def beautify(filename):
     sqs_client = boto3.client('sqs')
     sqs_client.send_message(
         QueueUrl=envvar('SQS_QUEUE_URL'),
-        MessageBody=filename
+        MessageBody=json.dumps({'filename': filename})
     )
     return redirect('/')

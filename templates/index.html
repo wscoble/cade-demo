@@ -1,0 +1,29 @@
+<!doctype html>
+<head>
+    <title>Hello from Flask</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+</head>
+<body>
+    <div class="container">
+        <h1>Image Beautifier</h1>
+    </div>
+    <div class="container">
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" id="file">
+            <br />
+            <input type="submit" value="Upload Image" name="submit">
+        </form>
+    </div>
+    {% for file in files %}
+        <div class="container">
+            <div class="container">
+                <img src="{{ bucket_url }}{{ file.filename }}" />
+            </div>
+            <div class="container">
+                <button onclick="window.location = '/beautify/{{ file.filename }}'">Beautify</button>
+            </div>
+        </div>
+    {% else %}
+        <div class="container">No files found</div>
+    {% endfor %}
+</body>

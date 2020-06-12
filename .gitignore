@@ -1,0 +1,14 @@
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+bin
+lib
+pyvenv.cfg
+*.zip
+.vscode
+.idea
+.elasticbeanstalk
+__pycache__

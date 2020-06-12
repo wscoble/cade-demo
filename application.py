@@ -5,9 +5,12 @@ from flask import Flask, request, Response, render_template, redirect
 
 import boto3
 
+def envvar(key):
+    return os.environ.get(key)
+
 # Default config vals
-THEME = 'default' if os.environ.get('THEME') is None else os.environ.get('THEME')
-FLASK_DEBUG = 'false' if os.environ.get('FLASK_DEBUG') is None else os.environ.get('FLASK_DEBUG')
+THEME = 'default' if envvar('THEME') is None else envvar('THEME')
+FLASK_DEBUG = 'false' if envvar('FLASK_DEBUG') is None else envvar('FLASK_DEBUG')
 
 # Create the Flask app
 app = Flask(__name__)
@@ -19,14 +22,14 @@ app.config.from_object(__name__)
 app.config.from_envvar('APP_CONFIG', silent=True)
 
 # Only enable Flask debugging if an env var is set to true
-app.debug = app.config['FLASK_DEBUG'] in ['true', 'True']
+app.debug = envvar('FLASK_DEBUG') in ['true', 'True']
 
 # Connect to DynamoDB and get ref to Table
 dynamodb = boto3.resource('dynamodb')
 table = None
 try:
     table = dynamodb.create_table(
-        TableName=app.config['IMAGE_INDEX_TABLE'],
+        TableName=envvar('IMAGE_INDEX_TABLE'),
         KeySchema=[
             {
                 'AttributeName': 'filename',
@@ -40,10 +43,10 @@ except:
 
 @app.route('/')
 def index():
-    table = dynamodb.Table(app.config['IMAGE_INDEX_TABLE'])
+    table = dynamodb.Table(envvar('IMAGE_INDEX_TABLE'))
     files = table.scan().get('Items', [])
     context = {
-        'bucket_url': app.config['BUCKET_URL'],
+        'bucket_url': envvar('BUCKET_URL'),
         'files': files
     }
     return render_template('index.html', **context)
@@ -53,11 +56,11 @@ def upload():
     f = request.files['file']
     f.save(f"uploads/{f.filename}")
     s3_client = boto3.client('s3')
-    table = dynamodb.Table(app.config['IMAGE_INDEX_TABLE'])
+    table = dynamodb.Table(envvar('IMAGE_INDEX_TABLE'))
     with open(f"uploads/{f.filename}", "rb") as _f:
         s3_client.upload_file(
             f"uploads/{f.filename}",
-            app.config['IMAGE_BUCKET'],
+            envvar('IMAGE_BUCKET'),
             f.filename,
             ExtraArgs={'ACL': 'public-read'})
         table.put_item(
@@ -72,7 +75,7 @@ def upload():
 def beautify(filename):
     sqs_client = boto3.client('sqs')
     sqs_client.send_message(
-        QueueUrl=app.config['SQS_QUEUE_URL'],
+        QueueUrl=envvar('SQS_QUEUE_URL'),
         MessageBody=filename
     )
     return redirect('/')

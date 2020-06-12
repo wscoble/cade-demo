@@ -1,6 +1,6 @@
 from flask import Flask, request
 from time import sleep
-from utils import envvar
+from .utils import envvar
 import boto3, os, random
 
 app = Flask(__name__)

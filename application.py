@@ -1,5 +1,5 @@
 from flask import Flask, request, Response, render_template, redirect
-from utils import envvar
+from .utils import envvar
 import json
 
 import boto3

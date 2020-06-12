@@ -1,23 +1,49 @@
 from flask import Flask, request
 from time import sleep
-from .utils import envvar
 import boto3, os, random
 
 app = Flask(__name__)
+def envvar(key):
+    return os.environ.get(key)
 
+dynamodb = boto3.resource('dynamodb')
 
-@app.route('/beautify')
+@app.route('/beautify', methods=['POST'])
 def beautify():
-    sleep(10)
-    body = request.json()
+    body = request.json
     s3_client = boto3.client('s3')
-    table = boto3.client('dynamodb').table(envvar('IMAGE_INDEX_TABLE'))
-    new_filename = random.choice(os.listdir('./pretties'))
-    s3_client.upload_file(f"pretties/{new_filename}", envvar('IMAGE_BUCKET'), body['filename'])
-    table.update_item(
-        Key={
-            'filename': body['filename']
-        },
-        UpdateExpression='SET original = false'
-    )
+    table = dynamodb.Table(envvar('IMAGE_INDEX_TABLE'))
+    requested_file = table.get_item(Key={'filename': body['filename']})['Item']
+    if requested_file['original']:
+        sleep(10)
+        new_filename = random.choice(os.listdir('./pretties'))
+        updated_filename = '.'.join(body['filename'].split('.')[:-1]) + '.' + new_filename.split('.')[-1]
+        s3_client.upload_file(
+            f"pretties/{new_filename}",
+            envvar('IMAGE_BUCKET'),
+            updated_filename,
+            ExtraArgs={'ACL': 'public-read'}
+        )
+        if updated_filename != requested_file['filename']:
+            table.delete_item(
+                Key={
+                    'filename': requested_file['filename']
+                }
+            )
+            table.put_item(
+                Item={
+                    'filename': updated_filename,
+                    'original': False
+                }
+            )
+        else:
+            table.update_item(
+                Key={
+                    'filename': requested_file['filename']
+                },
+                UpdateExpression='SET original = :original',
+                ExpressionAttributeValues={
+                    ':original': False
+                }
+            )
     return ''

@@ -19,9 +19,11 @@
             <div class="container">
                 <img src="{{ bucket_url }}{{ file.filename }}" />
             </div>
+            {% if file.original %}
             <div class="container">
                 <button onclick="window.location = '/beautify/{{ file.filename }}'">Beautify</button>
             </div>
+            {% endif %}
         </div>
     {% else %}
         <div class="container">No files found</div>

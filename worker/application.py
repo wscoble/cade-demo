@@ -8,7 +8,7 @@ def envvar(key):
 
 dynamodb = boto3.resource('dynamodb')
 
-@app.route('/beautify', methods=['POST'])
+@app.route('/', methods=['POST'])
 def beautify():
     body = request.json
     s3_client = boto3.client('s3')

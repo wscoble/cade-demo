@@ -15,7 +15,6 @@ def beautify():
     table = dynamodb.Table(envvar('IMAGE_INDEX_TABLE'))
     requested_file = table.get_item(Key={'filename': body['filename']})['Item']
     if requested_file['original']:
-        sleep(10)
         new_filename = random.choice(os.listdir('./pretties'))
         updated_filename = '.'.join(body['filename'].split('.')[:-1]) + '.' + new_filename.split('.')[-1]
         s3_client.upload_file(
